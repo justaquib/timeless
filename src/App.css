@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+.splash-progress {
+  transition: width 50ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-progress {
+    transition: none;
+  }
+}
