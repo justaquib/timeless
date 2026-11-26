@@ -35,3 +35,32 @@ svg.lucide {
     transition: none;
   }
 }
+.dial-hands {
+      transform-origin: 210.6px 75px;
+      animation: dial-sweep 6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    }
+
+    @keyframes dial-sweep {
+      0%, 15% {
+        transform: rotate(-90deg);
+      }
+      25%, 40% {
+        transform: rotate(-60deg);
+      }
+      50%, 65% {
+        transform: rotate(-30deg);
+      }
+      75%, 90% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(0deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dial-hands {
+        animation: none;
+        transform: rotate(-90deg);
+      }
+    }

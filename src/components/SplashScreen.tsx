@@ -106,11 +106,29 @@ export function SplashScreen({
       <div className="absolute -left-32 -top-32 size-96 rounded-full bg-white/5 blur-3xl" />
       <div className="absolute -bottom-40 -right-32 size-[32rem] rounded-full bg-white/5 blur-3xl" />
       <main className="relative z-10 flex w-full max-w-md flex-col items-center text-center">
-        <div className="flex size-20 items-center justify-center rounded-[28px] border border-white/15 bg-white/5 shadow-2xl shadow-black/40 backdrop-blur">
-          <Clock3 size={36} strokeWidth={1.5} />
-        </div>
         <p className="mt-7 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300">A little more time for</p>
-        <h1 className="mt-2 text-5xl font-semibold tracking-tight">Timeless</h1>
+        <h1 aria-label="Timeless" className="mt-2 flex w-full max-w-[300px] items-center justify-center">
+          <svg aria-hidden="true" className="h-auto w-full" viewBox="0 0 420 150" xmlns="http://www.w3.org/2000/svg">
+            <g fill="white" fontFamily="'Helvetica Neue', Arial, sans-serif" fontSize="76" fontWeight="200">
+              <text lengthAdjust="spacingAndGlyphs" textLength="140" x="8" y="94">Tim</text>
+              <text lengthAdjust="spacingAndGlyphs" textLength="140" x="278" y="94">less</text>
+            </g>
+
+            {/* Tapered Crescent Circle & Animated Dial centered at (210, 75) */}
+            <g fill="white">
+              <path d="M 271 75 A 61 61 0 1 0 260 110 A 58 58 0 1 1 271 75 Z" />
+
+              <g className="dial-hands">
+                <polygon points="174.5,75 179,72.3 205.7,72.3 205.7,77.7 179,77.7" />
+                <polygon points="215.6,72.7 252.2,73.6 263.1,75.9 252.2,77.3 215.6,77.3" />
+                <path
+                  fillRule="evenodd"
+                  d="M 210.6 69.1 A 5.9 5.9 0 1 0 210.6 80.9 A 5.9 5.9 0 1 0 210.6 69.1 Z M 210.6 72.3 A 2.7 2.7 0 1 1 210.6 77.7 A 2.7 2.7 0 1 1 210.6 72.3 Z"
+                />
+              </g>
+            </g>
+          </svg>
+        </h1>
         <p className="mt-3 text-sm text-slate-300">A little space for what matters.</p>
         <div
           aria-label="Loading Timeless"
@@ -121,7 +139,7 @@ export function SplashScreen({
           role="progressbar"
         >
           <div
-            className="splash-progress h-full rounded-full bg-gradient-to-r from-neutral-400 to-white"
+            className="splash-progress h-full rounded-full bg-linear-to-r from-neutral-400 to-white"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -130,6 +148,7 @@ export function SplashScreen({
           aria-label={soundLabel}
           className="mt-7 inline-flex items-center gap-2 rounded-full border border-white/15 px-3.5 py-2 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-50"
           disabled={soundState === "unavailable"}
+          hidden
           onClick={() => {
             if (soundState === "playing") stopSound();
             else void playSound();
