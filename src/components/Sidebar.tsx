@@ -27,7 +27,7 @@ export function Sidebar({
   const templates = useMailerStore((state) => state.templates);
   const sentMail = useMailerStore((state) => state.sentMail);
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 flex w-[220px] flex-col overflow-y-auto border-r border-slate-200 bg-white px-3.5 py-4">
+    <aside className="fixed inset-y-0 left-0 z-20 flex w-[220px] flex-col overflow-y-auto border-r border-t border-slate-200 bg-white px-3.5 py-4">
       <div className="flex items-center gap-3 px-2">
         <div className="flex size-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
           <Send size={17} />

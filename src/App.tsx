@@ -209,7 +209,7 @@ function WorkspaceApp({
         }}
       />
       <div className="ml-[220px] min-h-screen min-w-0">
-        <header className="workspace-header sticky top-0 z-10 flex min-h-[64px] items-center justify-between border-b border-slate-200/80 bg-white/90 px-5 backdrop-blur-xl sm:px-6">
+        <header className="workspace-header sticky top-0 z-10 flex min-h-[64px] items-center justify-between border-b border-t border-slate-200/80 bg-white/90 px-5 backdrop-blur-xl sm:px-6">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Personal workspace</p>
           <div className="flex items-center gap-2.5">
             <div className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-medium sm:flex ${smtpSettings ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>

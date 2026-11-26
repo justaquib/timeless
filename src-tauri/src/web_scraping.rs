@@ -108,13 +108,16 @@ fn fetch_scrape_page_sync(raw_url: &str) -> Result<ScrapePageResponse, String> {
     if bytes.len() as u64 > MAX_PAGE_BYTES {
         return Err("The website page is larger than the 2 MB limit.".into());
     }
-    let html = String::from_utf8(bytes)
-        .map_err(|_| "The website page is not valid UTF-8 HTML.".to_string())?;
+    let html = decode_html(&bytes);
 
     Ok(ScrapePageResponse {
         url: response.url().to_string(),
         html,
     })
+}
+
+fn decode_html(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).into_owned()
 }
 
 fn validate_url(raw_url: &str) -> Result<Url, String> {
@@ -175,7 +178,16 @@ fn is_public_ip(ip: IpAddr) -> bool {
 mod tests {
     use std::net::IpAddr;
 
-    use super::{is_public_ip, validate_url};
+    use super::{decode_html, is_public_ip, validate_url};
+
+    #[test]
+    fn malformed_utf8_does_not_prevent_html_from_being_scraped() {
+        let html = decode_html(b"<title>Product \xff page</title>");
+
+        assert!(html.contains("<title>Product "));
+        assert!(html.contains(" page</title>"));
+        assert!(html.contains('\u{fffd}'));
+    }
 
     #[test]
     fn only_public_http_urls_without_credentials_are_accepted() {
