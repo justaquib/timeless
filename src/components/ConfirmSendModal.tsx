@@ -1,12 +1,13 @@
 import { AlertCircle, Send } from "lucide-react";
-import type { GmailSendQuota } from "../domain/mailer";
+import type { MailSendQuota } from "../domain/mailer";
+import { mailProviderOptions } from "../domain/preferences";
 
 export function ConfirmSendModal({
   open,
   count,
   ccCount,
   bccCount,
-  gmailQuota,
+  mailQuota,
   onClose,
   onConfirm,
 }: {
@@ -14,11 +15,13 @@ export function ConfirmSendModal({
   count: number;
   ccCount: number;
   bccCount: number;
-  gmailQuota?: GmailSendQuota | null;
+  mailQuota?: MailSendQuota | null;
   onClose: () => void;
   onConfirm: () => void;
 }) {
   if (!open) return null;
+  const providerLabel =
+    mailProviderOptions.find((option) => option.id === mailQuota?.providerFamily)?.label ?? "Mail";
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
       <section aria-labelledby="confirm-title" aria-modal="true" className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl" role="dialog">
@@ -29,9 +32,11 @@ export function ConfirmSendModal({
           {ccCount > 0 && ` Each message will include ${ccCount} Cc recipient${ccCount === 1 ? "" : "s"}; Cc can see each client's To address.`}
           {bccCount > 0 && ` Each message will also include ${bccCount} Bcc recipient${bccCount === 1 ? "" : "s"}; Bcc addresses stay hidden from other recipients.`}
         </p>
-        {gmailQuota && (
+        {mailQuota && (
           <p className="mt-3 text-xs leading-5 text-slate-600">
-            Gmail safety limit: {gmailQuota.remaining} recipient slot{gmailQuota.remaining === 1 ? "" : "s"} remain in the rolling 24-hour window. Messages are paced at least {gmailQuota.minimumIntervalSeconds} seconds apart. Sends outside Timeless also count toward Google’s limits.
+            {providerLabel} limit: {mailQuota.remaining} recipient slot{mailQuota.remaining === 1 ? "" : "s"} remain in the rolling 24-hour window. To, Cc, and Bcc recipients all count; failed attempts use slots too.
+            {mailQuota.minimumIntervalSeconds > 0 &&
+              ` Gmail messages are paced at least ${mailQuota.minimumIntervalSeconds} seconds apart, and Google also counts sends outside Timeless.`}
           </p>
         )}
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs leading-5 text-amber-800">

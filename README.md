@@ -1,6 +1,6 @@
 # Timeless
 
-Timeless is a desktop mail workspace for composing reusable templates, managing a small client list, configuring SMTP, and sending personalized plain-text emails one primary recipient at a time (up to 100 per sequence), with optional CC/BCC copies on each message. Templates can include up to 10 attachments with a combined size of 10 MB.
+Timeless is a personal desktop workspace for reusable email templates, contact management, secure SMTP sending, and focused web research. Email sequences support up to 100 contacts, with optional CC/BCC copies; templates can include up to 10 attachments with a combined size of 10 MB.
 
 SMTP delivery, secure credential storage, and Google sign-in require the Tauri desktop runtime. Credentials are stored in the operating system keychain; browser preview does not send mail.
 
@@ -15,6 +15,14 @@ Quick SMTP setup is available for Gmail, Zoho Mail, Outlook.com, and Microsoft 3
 Google sign-in is optional. Timeless uses a PKCE authorization flow in the system browser and requests Gmail read-only access. Desktop OAuth clients are public clients; any client secret configured in `.env.local` is bundled with the app and cannot be kept confidential. Use only a Desktop app client, never a confidential Web app client secret. The dashboard counts today's inbox replies whose `In-Reply-To` or `References` headers match sent Message-IDs from the connected Gmail address; it requests headers only, not message bodies. The Google refresh token is stored in the OS keychain. Gmail OAuth must be configured and tested in your own Google Cloud project.
 
 Successful sent receipts (up to 5,000) are stored locally in the app's webview storage. The dashboard sent count can be filtered by today, this week (Monday-start), this month, or this year using the computer's local calendar.
+
+## Preferences
+
+The Preferences page stores your appearance, splash-screen intro music setting, and separate rolling 24-hour recipient limits for Gmail, Zoho, Outlook.com, Microsoft 365, and custom SMTP. Each To/Cc/Bcc delivery counts toward the selected provider family limit; Gmail's existing 400-recipient personal or 1,600-recipient Workspace safety ceiling still applies. Limits persist in local preferences and are enforced by the desktop backend.
+
+## Website search
+
+The Web scraper section scans up to 20 pages linked from a public website URL for a keyword or phrase. Results can be filtered to the past 24 hours, 7, 30, or 90 days, or from a chosen date, and opened or shared individually through WhatsApp or Telegram. The app fetches HTML directly from the entered site; it does not use a hosted scraping service. Pages that require sign-in or render content only with JavaScript may not be searchable, and pages without published-date metadata cannot be date-verified. Requests are limited to public HTTP/HTTPS hosts and HTML pages up to 2 MB.
 
 ## Development
 

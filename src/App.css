@@ -1,4 +1,30 @@
 @import "tailwindcss";
+@import "./workspace-theme.css";
+
+html {
+  font-size: 15px;
+}
+
+@theme {
+  --spacing: 0.235rem;
+  --text-xs: 0.7125rem;
+  --text-sm: 0.83125rem;
+  --text-base: 0.95rem;
+  --text-lg: 1.06875rem;
+  --text-xl: 1.1875rem;
+  --text-2xl: 1.425rem;
+  --text-3xl: 1.78125rem;
+  --text-4xl: 2.1375rem;
+  --text-5xl: 2.85rem;
+  --text-6xl: 3.5625rem;
+  --text-7xl: 4.275rem;
+  --text-8xl: 5.7rem;
+  --text-9xl: 7.6rem;
+}
+
+svg.lucide {
+  scale: 0.92;
+}
 
 .splash-progress {
   transition: width 50ms linear;

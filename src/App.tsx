@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { isTauri } from "@tauri-apps/api/core";
-import { ArrowLeft, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { LogOut, Settings, ShieldCheck } from "lucide-react";
 import { toast } from "react-toastify";
 import { useMailerStore } from "./store/mailerStore";
+import { usePreferencesStore } from "./store/preferencesStore";
 import { countSuccessfulSends, parseEmailAddressList } from "./domain/mailer";
-import type { EmailCopyRecipients, Section, SentPeriod } from "./domain/mailer";
+import { mailQuotaBlockReason } from "./domain/mailLimits";
+import type { EmailCopyRecipients, SentPeriod } from "./domain/mailer";
+import { sectionDetails } from "./domain/workspace";
+import type { Section } from "./domain/workspace";
 import { ActivityView } from "./components/ActivityView";
 import { AudienceView } from "./components/AudienceView";
 import { ComposeView } from "./components/ComposeView";
@@ -17,11 +21,13 @@ import { Sidebar } from "./components/Sidebar";
 import { SplashScreen } from "./components/SplashScreen";
 import { TemplatesView } from "./components/TemplatesView";
 import { RecipientPickerModal } from "./components/RecipientPickerModal";
+import { PreferencesContainer } from "./components/PreferencesContainer";
+import { WebScraperContainer } from "./components/WebScraperContainer";
 import { useGmailAuth } from "./hooks/useGmailAuth";
 import { useGmailReplyCount } from "./hooks/useGmailReplyCount";
 import { sentMailHistoryQueryKey, useSentMailHistory } from "./hooks/useSentMailHistory";
 import { useSendQueue } from "./hooks/useSendQueue";
-import { useGmailSendQuota, useSmtpSettings } from "./hooks/useSmtpSettings";
+import { useMailSendQuota, useSmtpSettings } from "./hooks/useSmtpSettings";
 import { useRecipientSelection } from "./hooks/useRecipientSelection";
 
 function WorkspaceApp({
@@ -58,11 +64,13 @@ function WorkspaceApp({
   const updateTemplate = useMailerStore((state) => state.updateTemplate);
   const { data: smtpSettings } = useSmtpSettings();
   const { sentMail, canRecover, recovering, recover } = useSentMailHistory(gmailAccount, smtpSettings);
-  const gmailAccountEmail =
-    smtpSettings?.host.trim().toLowerCase() === "smtp.gmail.com"
-      ? smtpSettings.username
-      : undefined;
-  const { data: gmailSendQuota, resetInSeconds: gmailResetInSeconds } = useGmailSendQuota(gmailAccountEmail);
+  const dailyLimits = usePreferencesStore((state) => state.dailyLimits);
+  const activeDailyLimit = dailyLimits[smtpSettings?.providerFamily ?? "custom"];
+  const { data: mailQuota, error: mailQuotaError, resetInSeconds } = useMailSendQuota(
+    smtpSettings?.providerFamily,
+    smtpSettings?.username,
+    activeDailyLimit,
+  );
   const gmailReplies = useGmailReplyCount(
     gmailAccount,
     sentMail,
@@ -104,10 +112,11 @@ function WorkspaceApp({
       setSettingsOpen(true);
       return;
     }
-    if (!canStartGmailSequence(deliveryRecipientCount(copyRecipients))) return;
+    if (!canStartMailSequence(deliveryRecipientCount(copyRecipients))) return;
     try {
       const result = await send({
         recipients,
+        dailyLimit: activeDailyLimit,
         ccEmails: copyRecipients.ccEmails,
         bccEmails: copyRecipients.bccEmails,
         subject: draftSubject,
@@ -126,10 +135,8 @@ function WorkspaceApp({
     } catch (error) {
       toast.error(String(error));
     } finally {
-      if (gmailAccountEmail) {
-        void queryClient.invalidateQueries({
-          queryKey: ["gmail-send-quota", gmailAccountEmail],
-        });
+      if (isTauri()) {
+        void queryClient.invalidateQueries({ queryKey: ["mail-send-quota"] });
       }
       if (gmailAccount) {
         void queryClient.invalidateQueries({
@@ -142,19 +149,10 @@ function WorkspaceApp({
     }
   };
 
-  const canStartGmailSequence = (recipientCount: number) => {
-    if (!gmailSendQuota) return true;
-    if (gmailSendQuota.nextSendInSeconds > 0) {
-      toast.error(`Wait ${gmailSendQuota.nextSendInSeconds} seconds before the next Gmail send.`);
-      return false;
-    }
-    if (recipientCount > gmailSendQuota.remaining) {
-      toast.error(
-        `This sequence requires ${recipientCount} recipient deliveries, but only ${gmailSendQuota.remaining} Gmail safety-limit recipients remain.`,
-      );
-      return false;
-    }
-    return true;
+  const canStartMailSequence = (recipientCount: number) => {
+    const reason = mailQuotaBlockReason(mailQuota, mailQuotaError, recipientCount);
+    if (reason) toast.error(reason);
+    return reason === null;
   };
 
   const requestSend = () => {
@@ -168,7 +166,7 @@ function WorkspaceApp({
         ccEmails: parseEmailAddressList(draftCc, "CC"),
         bccEmails: parseEmailAddressList(draftBcc, "BCC"),
       };
-      if (canStartGmailSequence(deliveryRecipientCount(nextCopyRecipients))) {
+      if (canStartMailSequence(deliveryRecipientCount(nextCopyRecipients))) {
         setCopyRecipients(nextCopyRecipients);
         setConfirmOpen(true);
       }
@@ -197,17 +195,11 @@ function WorkspaceApp({
     toast.success("Template saved.");
   };
 
-  const pageTitle: Record<Section, { title: string; description: string }> = {
-    dashboard: { title: "Dashboard", description: "A quick view of your outreach and replies." },
-    compose: { title: "Compose email", description: "Create a personal note for your client list." },
-    templates: { title: "Email templates", description: "Write once, personalize every message." },
-    audience: { title: "Your audience", description: "Manage the people you want to reach." },
-    activity: { title: "Sent emails", description: "Keep track of each individual delivery." },
-  };
   const sentCount = countSuccessfulSends(sentMail, sentPeriod);
+  const appearance = usePreferencesStore((state) => state.appearance);
 
   return (
-    <div className="min-h-screen bg-[#f5f6fa] text-slate-800">
+    <div className={`workspace-theme ${appearance}-theme min-h-screen bg-[#0a0a0a] text-slate-800`}>
       <Sidebar
         activeSection={activeSection}
         connected={Boolean(smtpSettings)}
@@ -216,15 +208,9 @@ function WorkspaceApp({
           if (!sending) setSettingsOpen(true);
         }}
       />
-      <div className="ml-[248px] min-h-screen min-w-0">
-        <header className="sticky top-0 z-10 flex min-h-[76px] items-center justify-between border-b border-slate-200/80 bg-white/90 px-6 backdrop-blur-xl sm:px-8">
-          <div className="flex items-center gap-3">
-            <button aria-label="Back" className="hidden rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:block"><ArrowLeft size={17} /></button>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Personal workspace <span className="px-1">/</span> {pageTitle[activeSection].title}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-800">{activeSection === "compose" ? "New message" : pageTitle[activeSection].title}</p>
-            </div>
-          </div>
+      <div className="ml-[220px] min-h-screen min-w-0">
+        <header className="workspace-header sticky top-0 z-10 flex min-h-[64px] items-center justify-between border-b border-slate-200/80 bg-white/90 px-5 backdrop-blur-xl sm:px-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Personal workspace</p>
           <div className="flex items-center gap-2.5">
             <div className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-medium sm:flex ${smtpSettings ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
               <span className={`size-1.5 rounded-full ${smtpSettings ? "bg-emerald-500" : "bg-slate-400"}`} />
@@ -257,11 +243,11 @@ function WorkspaceApp({
           </div>
         </header>
 
-        <main className="mx-auto max-w-[1500px] px-5 py-7 sm:px-8 lg:px-10">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <main className="mx-auto max-w-[1500px] px-4 py-5 sm:px-6 lg:px-7">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{pageTitle[activeSection].title}</h1>
-              <p className="mt-1.5 text-sm text-slate-500">{pageTitle[activeSection].description}</p>
+              <h1 className="text-xl font-semibold tracking-tight text-slate-900">{sectionDetails[activeSection].title}</h1>
+              <p className="mt-1 text-xs text-slate-500">{sectionDetails[activeSection].description}</p>
             </div>
             {activeSection === "compose" && (
               <button
@@ -314,7 +300,7 @@ function WorkspaceApp({
               setSelectedTemplateId={selectTemplate}
               setSubject={setDraftSubject}
               smtpSettings={smtpSettings}
-              gmailQuota={gmailSendQuota && { ...gmailSendQuota, resetInSeconds: gmailResetInSeconds }}
+              mailQuota={mailQuota && { ...mailQuota, resetInSeconds }}
               subject={draftSubject}
               templates={templates}
             />
@@ -336,9 +322,11 @@ function WorkspaceApp({
               sentMail={sentMail}
             />
           )}
+          {activeSection === "scraper" && <WebScraperContainer />}
+          {activeSection === "preferences" && <PreferencesContainer />}
 
           <footer className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/80 pt-4 text-[11px] text-slate-400">
-            <span>Timeless · Your mail stays yours</span>
+            <span>Timeless · Your workspace, your pace</span>
             <span className="inline-flex items-center gap-1.5"><ShieldCheck size={13} /> Credentials kept in your system keychain</span>
           </footer>
         </main>
@@ -358,7 +346,7 @@ function WorkspaceApp({
         bccCount={copyRecipients.bccEmails.length}
         ccCount={copyRecipients.ccEmails.length}
         count={recipients.length}
-        gmailQuota={gmailSendQuota}
+        mailQuota={mailQuota}
         onClose={() => setConfirmOpen(false)}
         onConfirm={() => void beginSending()}
         open={confirmOpen}
@@ -370,10 +358,12 @@ function WorkspaceApp({
 export function App() {
   const [splashComplete, setSplashComplete] = useState(false);
   const [offlineMode, setOfflineMode] = useState(false);
+  const musicEnabled = usePreferencesStore((state) => state.splashMusicEnabled);
   const gmailAuth = useGmailAuth();
+  const completeSplash = useCallback(() => setSplashComplete(true), []);
 
   if (!splashComplete) {
-    return <SplashScreen onComplete={() => setSplashComplete(true)} />;
+    return <SplashScreen musicEnabled={musicEnabled} onComplete={completeSplash} />;
   }
 
   if (isTauri() && !gmailAuth.account && !offlineMode) {

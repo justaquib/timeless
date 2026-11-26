@@ -18,31 +18,31 @@ export function GmailLoginScreen({
   const visibleError = error ?? (loadError ? String(loadError) : null);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f5f6fa] px-5 py-10">
-      <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-200/70 sm:p-9">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-          <Clock3 size={26} />
+    <main className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-5 py-8 text-neutral-100">
+      <section className="w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-2xl sm:p-7">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-950">
+          <Clock3 size={23} />
         </div>
         <div className="mt-6 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-600">Welcome to</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Timeless</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-400">Welcome to</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-100">Timeless</h1>
+          <p className="mt-2 text-xs leading-5 text-neutral-400">
             Connect Gmail to see replies to messages sent from Timeless.
           </p>
         </div>
 
-        <div className="mt-7 space-y-3 rounded-2xl bg-slate-50 p-4">
-          <p className="flex items-start gap-2.5 text-xs leading-5 text-slate-600">
+        <div className="mt-5 space-y-3 rounded-xl bg-neutral-900 p-3.5">
+          <p className="flex items-start gap-2.5 text-xs leading-5 text-neutral-300">
             <ShieldCheck className="mt-0.5 shrink-0 text-emerald-600" size={16} />
             Read-only inbox access. Timeless checks message headers for replies; it does not read or store message bodies.
           </p>
           <p className="flex items-start gap-2.5 text-xs leading-5 text-slate-600">
-            <Mail className="mt-0.5 shrink-0 text-indigo-600" size={16} />
+            <Mail className="mt-0.5 shrink-0 text-neutral-300" size={16} />
             Gmail sign-in is optional for sending through Zoho, Outlook, or another SMTP account.
           </p>
         </div>
 
-        <div className="mt-5 flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+        <div className="mt-4 flex gap-2.5 rounded-lg border border-amber-900/70 bg-amber-950/30 p-3 text-xs leading-5 text-amber-200">
           <AlertCircle className="mt-0.5 shrink-0" size={15} />
           <p>
             If Google reports a client ID error, check the Desktop app client ID in{" "}
@@ -52,18 +52,18 @@ export function GmailLoginScreen({
           </p>
         </div>
         {loading && (
-          <p className="mt-4 text-center text-xs text-slate-500">
+          <p className="mt-4 text-center text-xs text-neutral-400">
             Checking for a saved Gmail connection…
           </p>
         )}
         {visibleError && (
-          <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50 p-3 text-xs leading-5 text-rose-700">
+          <div className="mt-4 rounded-lg border border-rose-900/70 bg-rose-950/30 p-3 text-xs leading-5 text-rose-200">
             {visibleError}
           </div>
         )}
 
         <button
-          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-70"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-100 px-4 py-2.5 text-xs font-semibold text-neutral-950 transition hover:bg-white disabled:cursor-wait disabled:opacity-70"
           disabled={signingIn || loading}
           onClick={onSignIn}
           type="button"
@@ -72,16 +72,16 @@ export function GmailLoginScreen({
           {loading ? "Checking Gmail connection…" : signingIn ? "Waiting for Google sign-in…" : "Continue with Gmail"}
         </button>
         <button
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-medium text-neutral-400 transition hover:bg-neutral-900 hover:text-neutral-100"
           onClick={onContinueWithoutGmail}
           type="button"
         >
           Continue without Gmail <ArrowRight size={15} />
         </button>
-        <p className="mt-5 text-center text-[10px] leading-5 text-slate-400">
+        <p className="mt-4 text-center text-[10px] leading-5 text-neutral-500">
           Google’s refresh token stays in your system keychain.{" "}
           <a
-            className="underline underline-offset-2 hover:text-slate-600"
+            className="underline underline-offset-2 hover:text-neutral-300"
             href="https://myaccount.google.com/permissions"
             rel="noreferrer"
             target="_blank"

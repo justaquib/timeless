@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getGmailSendQuota, getSmtpSettings } from "../services/mailerApi";
+import { getMailSendQuota, getSmtpSettings } from "../services/mailerApi";
 import { isTauri } from "@tauri-apps/api/core";
 import { useGmailQuotaCountdown } from "./useGmailQuotaCountdown";
+import type { MailProviderFamily } from "../domain/preferences";
 
 export const smtpSettingsQueryKey = ["smtp-settings"] as const;
 
@@ -13,11 +14,15 @@ export function useSmtpSettings() {
   });
 }
 
-export function useGmailSendQuota(accountEmail?: string) {
+export function useMailSendQuota(
+  providerFamily?: MailProviderFamily,
+  username?: string,
+  dailyLimit = 1_000,
+) {
   const quotaQuery = useQuery({
-    queryKey: ["gmail-send-quota", accountEmail],
-    queryFn: getGmailSendQuota,
-    enabled: Boolean(accountEmail) && isTauri(),
+    queryKey: ["mail-send-quota", providerFamily, username, dailyLimit],
+    queryFn: () => getMailSendQuota(dailyLimit),
+    enabled: Boolean(providerFamily && username) && isTauri(),
     refetchInterval: (query) => {
       const { nextSendInSeconds = 0, resetInSeconds = 0 } = query.state.data ?? {};
       if (nextSendInSeconds > 0) return 1_000;

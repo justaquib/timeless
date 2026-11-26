@@ -3,7 +3,13 @@ import { Clock3, Volume2, VolumeX } from "lucide-react";
 
 type SoundState = "playing" | "ready" | "blocked" | "unavailable";
 
-export function SplashScreen({ onComplete }: { onComplete: () => void }) {
+export function SplashScreen({
+  onComplete,
+  musicEnabled,
+}: {
+  onComplete: () => void;
+  musicEnabled: boolean;
+}) {
   const [soundState, setSoundState] = useState<SoundState>("ready");
   const [progress, setProgress] = useState(0);
   const contextRef = useRef<AudioContext | null>(null);
@@ -71,7 +77,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
       setProgress(Math.min(100, ((Date.now() - startedAt) / 5_500) * 100));
     }, 50);
     const timer = window.setTimeout(onComplete, 5_500);
-    void playSound(generation);
+    if (musicEnabled) void playSound(generation);
     return () => {
       generationRef.current += 1;
       window.clearInterval(progressTimer);
@@ -82,7 +88,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
       contextRef.current = null;
       void context?.close();
     };
-  }, []);
+  }, [musicEnabled, onComplete]);
 
   const soundLabel =
     soundState === "playing"
@@ -91,19 +97,21 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
         ? "Play intro music"
         : soundState === "unavailable"
           ? "Audio unavailable"
-          : "Replay intro music";
+          : musicEnabled
+            ? "Replay intro music"
+            : "Play intro music";
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#10172b] px-6 text-white">
-      <div className="absolute -left-32 -top-32 size-96 rounded-full bg-indigo-500/20 blur-3xl" />
-      <div className="absolute -bottom-40 -right-32 size-[32rem] rounded-full bg-cyan-400/10 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080808] px-6 text-white">
+      <div className="absolute -left-32 -top-32 size-96 rounded-full bg-white/5 blur-3xl" />
+      <div className="absolute -bottom-40 -right-32 size-[32rem] rounded-full bg-white/5 blur-3xl" />
       <main className="relative z-10 flex w-full max-w-md flex-col items-center text-center">
-        <div className="flex size-20 items-center justify-center rounded-[28px] border border-white/15 bg-white/10 shadow-2xl shadow-indigo-950/40 backdrop-blur">
+        <div className="flex size-20 items-center justify-center rounded-[28px] border border-white/15 bg-white/5 shadow-2xl shadow-black/40 backdrop-blur">
           <Clock3 size={36} strokeWidth={1.5} />
         </div>
-        <p className="mt-7 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-200">A little more time for</p>
+        <p className="mt-7 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300">A little more time for</p>
         <h1 className="mt-2 text-5xl font-semibold tracking-tight">Timeless</h1>
-        <p className="mt-3 text-sm text-slate-300">Thoughtful messages, delivered with care.</p>
+        <p className="mt-3 text-sm text-slate-300">A little space for what matters.</p>
         <div
           aria-label="Loading Timeless"
           aria-valuemax={100}
@@ -113,7 +121,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           role="progressbar"
         >
           <div
-            className="splash-progress h-full rounded-full bg-gradient-to-r from-indigo-300 to-cyan-200"
+            className="splash-progress h-full rounded-full bg-gradient-to-r from-neutral-400 to-white"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -132,7 +140,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           {soundLabel}
         </button>
       </main>
-      <span className="absolute bottom-7 text-[10px] tracking-[0.18em] text-slate-500">A PRIVATE MAIL WORKSPACE</span>
+      <span className="absolute bottom-7 text-[10px] tracking-[0.18em] text-slate-500">A SPACE FOR YOUR WORK AND IDEAS</span>
     </div>
   );
 }

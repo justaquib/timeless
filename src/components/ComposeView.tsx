@@ -1,6 +1,7 @@
 import { Clock3, FileText, LoaderCircle, Mail, Paperclip, Plus, Send, ShieldCheck, Users, X } from "lucide-react";
 import { renderTokens } from "../domain/mailer";
-import type { GmailSendQuota, MailAttachment, MailTemplate, PublicSmtpSettings, QueueItem, Recipient } from "../domain/mailer";
+import type { MailSendQuota, MailAttachment, MailTemplate, PublicSmtpSettings, QueueItem, Recipient } from "../domain/mailer";
+import { mailProviderOptions } from "../domain/preferences";
 import { DeliveryIcon } from "./DeliveryIcon";
 
 function formatCountdown(seconds: number) {
@@ -32,7 +33,7 @@ export function ComposeView({
   onGoToTemplates,
   onGoToAudience,
   smtpSettings,
-  gmailQuota,
+  mailQuota,
   attachments,
   queue,
   sending,
@@ -58,7 +59,7 @@ export function ComposeView({
   onGoToTemplates: () => void;
   onGoToAudience: () => void;
   smtpSettings?: PublicSmtpSettings | null;
-  gmailQuota?: GmailSendQuota | null;
+  mailQuota?: MailSendQuota | null;
   attachments: MailAttachment[];
   queue: QueueItem[];
   sending: boolean;
@@ -70,6 +71,8 @@ export function ComposeView({
   const failedCount = queue.filter((item) => item.status === "failed").length;
   const previewBody = renderTokens(body, previewRecipient);
   const previewSubject = renderTokens(subject, previewRecipient);
+  const providerLabel =
+    mailProviderOptions.find((option) => option.id === mailQuota?.providerFamily)?.label ?? "Mail";
 
   return (
     <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(310px,0.8fr)]">
@@ -329,36 +332,41 @@ export function ComposeView({
             <p className="mt-3 text-center text-[11px] leading-5 text-amber-700">Connect an SMTP account before sending.</p>
           )}
         </section>
-        {gmailQuota && (
+        {mailQuota && (
           <section className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Gmail sending guard</p>
+                <p className="text-sm font-semibold text-slate-900">{providerLabel} daily limit</p>
                 <p className="mt-1 text-xs text-slate-600">
-                  {gmailQuota.recipientsLast24Hours} of {gmailQuota.dailyLimit} recipient deliveries counted in the rolling 24-hour window
+                  {mailQuota.recipientsLast24Hours} of {mailQuota.dailyLimit} recipient deliveries counted in the rolling 24-hour window
                 </p>
-                {gmailQuota.resetInSeconds > 0 && (
+                {mailQuota.resetInSeconds > 0 && (
                   <p className="mt-1 text-[11px] font-medium text-blue-700">
-                    Next recipient slot resets in <span className="tabular-nums">{formatCountdown(gmailQuota.resetInSeconds)}</span>
+                    Next recipient slot resets in <span className="tabular-nums">{formatCountdown(mailQuota.resetInSeconds)}</span>
                   </p>
                 )}
               </div>
               <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-blue-700">
-                {gmailQuota.remaining} remaining
+                {mailQuota.remaining} remaining
               </span>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
               <div
                 className="h-full rounded-full bg-blue-500"
-                style={{ width: `${(gmailQuota.recipientsLast24Hours / gmailQuota.dailyLimit) * 100}%` }}
+                style={{ width: `${(mailQuota.recipientsLast24Hours / mailQuota.dailyLimit) * 100}%` }}
               />
             </div>
             <p className="mt-3 text-[11px] leading-5 text-slate-600">
-              Messages are sent individually at least {gmailQuota.minimumIntervalSeconds} seconds apart. This device counts each To, Cc, and Bcc recipient only for Timeless mail; Gmail also counts recipients sent elsewhere, and limits may vary. Send relevant mail only to people who expect it, and configure SPF/DKIM/DMARC for your domain. Pacing cannot guarantee inbox placement.
+              Every To, Cc, and Bcc delivery counts. Failed attempts also use a slot. Provider limits may vary; Gmail additionally applies its 400 / 1,600 safety cap and counts recipients sent elsewhere.
             </p>
-            {gmailQuota.nextSendInSeconds > 0 && (
+            {mailQuota.minimumIntervalSeconds > 0 && (
+              <p className="mt-2 text-[11px] text-slate-600">
+                Gmail messages are paced at least {mailQuota.minimumIntervalSeconds} seconds apart.
+              </p>
+            )}
+            {mailQuota.nextSendInSeconds > 0 && (
               <p className="mt-2 text-[11px] font-medium text-amber-700">
-                Wait {gmailQuota.nextSendInSeconds} seconds before the next Gmail send.
+                Wait {mailQuota.nextSendInSeconds} seconds before the next Gmail send.
               </p>
             )}
           </section>

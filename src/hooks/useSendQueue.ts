@@ -7,6 +7,7 @@ import { useMailerStore } from "../store/mailerStore";
 
 interface SendQueueInput extends EmailCopyRecipients {
   recipients: Recipient[];
+  dailyLimit: number;
   subject: string;
   body: string;
   attachments: MailAttachment[];
@@ -28,6 +29,7 @@ export function useSendQueue() {
 
   const send = async ({
     recipients,
+    dailyLimit,
     ccEmails,
     bccEmails,
     subject,
@@ -68,6 +70,7 @@ export function useSendQueue() {
         const personalizedSubject = renderTokens(subject, recipient);
         try {
           const receipt = await sendEmail({
+            dailyLimit,
             toEmail: recipient.email,
             toName: recipient.name,
             ccEmails,

@@ -18,8 +18,10 @@ mod gmail;
 mod gmail_auth;
 mod gmail_auth_callback;
 mod gmail_replies;
+mod mail_limits;
 mod mail_sending;
 mod sent_history;
+mod web_scraping;
 
 const KEYRING_SERVICE: &str = "com.justaquib.timeless";
 const KEYRING_USER: &str = "smtp-settings";
@@ -50,6 +52,7 @@ struct PublicSmtpSettings {
     port: u16,
     security: String,
     gmail_account_type: String,
+    provider_family: String,
     username: String,
     from_name: String,
     from_email: String,
@@ -79,6 +82,7 @@ impl From<&SmtpSettings> for PublicSmtpSettings {
             port: settings.port,
             security: settings.security.clone(),
             gmail_account_type: settings.gmail_account_type.clone(),
+            provider_family: mail_limits::provider_family(settings).into(),
             username: settings.username.clone(),
             from_name: settings.from_name.clone(),
             from_email: settings.from_email.clone(),
@@ -223,8 +227,11 @@ fn get_smtp_settings() -> Result<Option<PublicSmtpSettings>, String> {
 }
 
 #[tauri::command]
-fn get_gmail_send_quota(app: AppHandle) -> Result<Option<gmail::GmailSendQuota>, String> {
-    gmail::send_quota(&app)
+fn get_mail_send_quota(
+    app: AppHandle,
+    daily_limit: usize,
+) -> Result<Option<mail_limits::MailSendQuota>, String> {
+    mail_limits::send_quota(&app, daily_limit)
 }
 
 #[tauri::command]
@@ -259,7 +266,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_smtp_settings,
-            get_gmail_send_quota,
+            get_mail_send_quota,
             gmail_auth::get_gmail_auth_account,
             gmail_auth::start_gmail_oauth,
             gmail_auth::exchange_gmail_oauth_code,
@@ -267,6 +274,7 @@ pub fn run() {
             gmail_replies::get_gmail_reply_count,
             gmail_replies::recover_gmail_sent_mail,
             sent_history::get_sent_mail_history,
+            web_scraping::fetch_scrape_page,
             save_smtp_settings,
             test_smtp_connection,
             save_template_attachment,

@@ -1,7 +1,7 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import type {
   GmailAuthAccount,
-  GmailSendQuota,
+  MailSendQuota,
   MailSendReceipt,
   MailAttachment,
   EmailCopyRecipients,
@@ -32,8 +32,8 @@ export async function getSmtpSettings() {
     : null;
 }
 
-export function getGmailSendQuota() {
-  return invoke<GmailSendQuota | null>("get_gmail_send_quota");
+export function getMailSendQuota(dailyLimit: number) {
+  return invoke<MailSendQuota | null>("get_mail_send_quota", { dailyLimit });
 }
 
 export function getGmailAuthAccount() {
@@ -98,6 +98,7 @@ export function testSmtpConnection(settings: SmtpFormValues) {
 }
 
 export function sendEmail({
+  dailyLimit,
   toEmail,
   toName,
   ccEmails,
@@ -106,6 +107,7 @@ export function sendEmail({
   body,
   attachments,
 }: EmailCopyRecipients & {
+  dailyLimit: number;
   toEmail: string;
   toName: string;
   subject: string;
@@ -113,6 +115,7 @@ export function sendEmail({
   attachments: MailAttachment[];
 }) {
   return invoke<MailSendReceipt>("send_email", {
+    dailyLimit,
     toEmail,
     toName,
     ccEmails,

@@ -1,0 +1,399 @@
+.workspace-theme {
+  color-scheme: dark;
+  background: #0a0a0a;
+}
+
+.workspace-theme .bg-white {
+  background-color: #121212;
+}
+
+.workspace-theme .bg-white\/90 {
+  background-color: rgb(12 12 12 / 94%);
+}
+
+.workspace-theme .bg-slate-50 {
+  background-color: #171717;
+}
+
+.workspace-theme .bg-slate-100 {
+  background-color: #202020;
+}
+
+.workspace-theme .bg-slate-200 {
+  background-color: #303030;
+}
+
+.workspace-theme .bg-indigo-50,
+.workspace-theme .bg-indigo-50\/70 {
+  background-color: #1b1b1b;
+}
+
+.workspace-theme .bg-indigo-100 {
+  background-color: #292929;
+}
+
+.workspace-theme .bg-indigo-600,
+.workspace-theme .bg-indigo-700 {
+  background-color: #eeeeee;
+}
+
+.workspace-theme .bg-blue-50,
+.workspace-theme .bg-blue-50\/60,
+.workspace-theme .bg-blue-50\/70 {
+  background-color: #171a1d;
+}
+
+.workspace-theme .bg-emerald-50 {
+  background-color: #142019;
+}
+
+.workspace-theme .bg-rose-50 {
+  background-color: #241719;
+}
+
+.workspace-theme .bg-rose-100 {
+  background-color: #2b1d1f;
+}
+
+.workspace-theme .bg-sky-100 {
+  background-color: #182329;
+}
+
+.workspace-theme .bg-amber-50 {
+  background-color: #241f14;
+}
+
+.workspace-theme .bg-amber-100 {
+  background-color: #2b2416;
+}
+
+.workspace-theme .bg-violet-50 {
+  background-color: #201b27;
+}
+
+.workspace-theme .border-slate-100,
+.workspace-theme .border-slate-200,
+.workspace-theme .border-slate-200\/80,
+.workspace-theme .border-indigo-100,
+.workspace-theme .border-indigo-200 {
+  border-color: #292929;
+}
+
+.workspace-theme .divide-slate-100 > :not(:last-child) {
+  border-color: #252525;
+}
+
+.workspace-theme .text-slate-900,
+.workspace-theme .text-slate-800 {
+  color: #f2f2f2;
+}
+
+.workspace-theme .text-slate-700 {
+  color: #dedede;
+}
+
+.workspace-theme .text-slate-600 {
+  color: #bdbdbd;
+}
+
+.workspace-theme .text-slate-500 {
+  color: #969696;
+}
+
+.workspace-theme .text-slate-400 {
+  color: #777777;
+}
+
+.workspace-theme .text-slate-300 {
+  color: #666666;
+}
+
+.workspace-theme .text-indigo-700,
+.workspace-theme .text-indigo-600 {
+  color: #e8e8e8;
+}
+
+.workspace-theme .text-indigo-500 {
+  color: #bdbdbd;
+}
+
+.workspace-theme .text-indigo-400 {
+  color: #999999;
+}
+
+.workspace-theme .text-blue-700,
+.workspace-theme .text-blue-600 {
+  color: #a9c5d8;
+}
+
+.workspace-theme .text-emerald-700,
+.workspace-theme .text-emerald-600 {
+  color: #86d6a1;
+}
+
+.workspace-theme .text-rose-700,
+.workspace-theme .text-rose-600 {
+  color: #f0a2a7;
+}
+
+.workspace-theme .text-amber-800,
+.workspace-theme .text-amber-700 {
+  color: #e4c47f;
+}
+
+.workspace-theme .text-sky-700 {
+  color: #a2cde0;
+}
+
+.workspace-theme .text-violet-600 {
+  color: #c3a9dc;
+}
+
+.workspace-theme .bg-indigo-600.text-white,
+.workspace-theme .bg-indigo-700.text-white {
+  color: #101010;
+}
+
+.workspace-theme .hover\:bg-white:hover {
+  background-color: #202020;
+}
+
+.workspace-theme .hover\:bg-slate-50:hover,
+.workspace-theme .hover\:bg-slate-100:hover,
+.workspace-theme .hover\:bg-indigo-50:hover {
+  background-color: #242424;
+}
+
+.workspace-theme input:not([type="checkbox"]),
+.workspace-theme select,
+.workspace-theme textarea {
+  color-scheme: dark;
+}
+
+.workspace-theme .workspace-header {
+  background-color: rgb(12 12 12 / 94%);
+}
+
+.workspace-theme .rounded-3xl {
+  border-radius: 0.875rem;
+}
+
+.workspace-theme .rounded-2xl {
+  border-radius: 0.75rem;
+}
+
+.workspace-theme .rounded-xl {
+  border-radius: 0.625rem;
+}
+
+.workspace-theme.light-theme {
+  color-scheme: light;
+  background: #f5f6fa;
+}
+
+.workspace-theme.light-theme .bg-white {
+  background-color: #ffffff;
+}
+
+.workspace-theme.light-theme .bg-white\/90 {
+  background-color: rgb(255 255 255 / 94%);
+}
+
+.workspace-theme.light-theme .bg-slate-50 {
+  background-color: #f8fafc;
+}
+
+.workspace-theme.light-theme .bg-slate-100 {
+  background-color: #f1f5f9;
+}
+
+.workspace-theme.light-theme .bg-slate-200 {
+  background-color: #e2e8f0;
+}
+
+.workspace-theme.light-theme .bg-indigo-50,
+.workspace-theme.light-theme .bg-indigo-50\/70 {
+  background-color: #eef2ff;
+}
+
+.workspace-theme.light-theme .bg-indigo-100 {
+  background-color: #e0e7ff;
+}
+
+.workspace-theme.light-theme .bg-indigo-600,
+.workspace-theme.light-theme .bg-indigo-700 {
+  background-color: #4f46e5;
+}
+
+.workspace-theme.light-theme .bg-blue-50,
+.workspace-theme.light-theme .bg-blue-50\/60,
+.workspace-theme.light-theme .bg-blue-50\/70 {
+  background-color: #eff6ff;
+}
+
+.workspace-theme.light-theme .bg-emerald-50 {
+  background-color: #ecfdf5;
+}
+
+.workspace-theme.light-theme .bg-rose-50 {
+  background-color: #fff1f2;
+}
+
+.workspace-theme.light-theme .bg-rose-100 {
+  background-color: #ffe4e6;
+}
+
+.workspace-theme.light-theme .bg-sky-100 {
+  background-color: #e0f2fe;
+}
+
+.workspace-theme.light-theme .bg-amber-50 {
+  background-color: #fffbeb;
+}
+
+.workspace-theme.light-theme .bg-amber-100 {
+  background-color: #fef3c7;
+}
+
+.workspace-theme.light-theme .bg-violet-50 {
+  background-color: #f5f3ff;
+}
+
+.workspace-theme.light-theme .border-slate-100 {
+  border-color: #f1f5f9;
+}
+
+.workspace-theme.light-theme .border-slate-200,
+.workspace-theme.light-theme .border-slate-200\/80 {
+  border-color: #e2e8f0;
+}
+
+.workspace-theme.light-theme .border-indigo-100 {
+  border-color: #e0e7ff;
+}
+
+.workspace-theme.light-theme .border-indigo-200 {
+  border-color: #c7d2fe;
+}
+
+.workspace-theme.light-theme .divide-slate-100 > :not(:last-child) {
+  border-color: #f1f5f9;
+}
+
+.workspace-theme.light-theme .text-slate-900 {
+  color: #0f172a;
+}
+
+.workspace-theme.light-theme .text-slate-800 {
+  color: #1e293b;
+}
+
+.workspace-theme.light-theme .text-slate-700 {
+  color: #334155;
+}
+
+.workspace-theme.light-theme .text-slate-600 {
+  color: #475569;
+}
+
+.workspace-theme.light-theme .text-slate-500 {
+  color: #64748b;
+}
+
+.workspace-theme.light-theme .text-slate-400 {
+  color: #94a3b8;
+}
+
+.workspace-theme.light-theme .text-slate-300 {
+  color: #cbd5e1;
+}
+
+.workspace-theme.light-theme .text-indigo-700 {
+  color: #4338ca;
+}
+
+.workspace-theme.light-theme .text-indigo-600 {
+  color: #4f46e5;
+}
+
+.workspace-theme.light-theme .text-indigo-500 {
+  color: #6366f1;
+}
+
+.workspace-theme.light-theme .text-indigo-400 {
+  color: #818cf8;
+}
+
+.workspace-theme.light-theme .text-blue-700 {
+  color: #1d4ed8;
+}
+
+.workspace-theme.light-theme .text-blue-600 {
+  color: #2563eb;
+}
+
+.workspace-theme.light-theme .text-emerald-700 {
+  color: #047857;
+}
+
+.workspace-theme.light-theme .text-emerald-600 {
+  color: #059669;
+}
+
+.workspace-theme.light-theme .text-rose-700 {
+  color: #be123c;
+}
+
+.workspace-theme.light-theme .text-rose-600 {
+  color: #e11d48;
+}
+
+.workspace-theme.light-theme .text-amber-800 {
+  color: #92400e;
+}
+
+.workspace-theme.light-theme .text-amber-700 {
+  color: #b45309;
+}
+
+.workspace-theme.light-theme .text-sky-700 {
+  color: #0369a1;
+}
+
+.workspace-theme.light-theme .text-violet-600 {
+  color: #7c3aed;
+}
+
+.workspace-theme.light-theme .bg-indigo-600.text-white,
+.workspace-theme.light-theme .bg-indigo-700.text-white {
+  color: #ffffff;
+}
+
+.workspace-theme.light-theme .hover\:bg-white:hover {
+  background-color: #f8fafc;
+}
+
+.workspace-theme.light-theme .hover\:bg-slate-50:hover {
+  background-color: #f8fafc;
+}
+
+.workspace-theme.light-theme .hover\:bg-slate-100:hover,
+.workspace-theme.light-theme .hover\:bg-indigo-50:hover {
+  background-color: #f1f5f9;
+}
+
+.workspace-theme.light-theme input:not([type="checkbox"]),
+.workspace-theme.light-theme select,
+.workspace-theme.light-theme textarea {
+  color-scheme: light;
+}
+
+.workspace-theme.light-theme .dashboard-hero {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.workspace-theme.light-theme .dashboard-hero .text-slate-300 {
+  color: #64748b;
+}
+

@@ -35,6 +35,7 @@ fn parse_copy_mailboxes(addresses: Vec<String>, field: &str) -> Result<Vec<Mailb
 #[tauri::command]
 pub(super) fn send_email(
     app: AppHandle,
+    daily_limit: usize,
     to_email: String,
     to_name: String,
     cc_emails: Vec<String>,
@@ -121,15 +122,13 @@ pub(super) fn send_email(
         .message_id(Some(message_id.clone()))
         .multipart(message)
         .map_err(|error| format!("Could not compose the email: {error}"))?;
-    let gmail_send_guard = super::gmail::acquire_send_guard(&app, &settings, recipient_count)?;
+    let _mail_send_guard =
+        super::mail_limits::acquire_send_guard(&app, &settings, recipient_count, daily_limit)?;
     transport.send(&email).map_err(|error| {
-        if gmail_send_guard.is_some() {
-            format!(
-                "Email delivery failed: {error}. This attempt counts toward the Gmail safety limit to avoid accidental duplicates."
-            )
-        } else {
-            format!("Email delivery failed: {error}")
-        }
+        format!(
+            "Email delivery failed: {error}. This attempt counts toward the Timeless {} rolling 24-hour limit to avoid accidental duplicates.",
+            super::mail_limits::provider_label(super::mail_limits::provider_family(&settings))
+        )
     })?;
     let history_save_error = super::sent_history::record_sent_mail(
         &app,

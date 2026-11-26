@@ -1,11 +1,11 @@
 # Project status
 
 **Updated:** 2026-11-26  
-**Product:** Timeless desktop mail workspace
+**Product:** Timeless personal desktop workspace
 
 ## Current state
 
-The application is a working Tauri + React starter with an email workspace UI and a direct SMTP delivery path. The frontend build and Rust backend compile have passed in this environment. A live SMTP connection or real delivery has not been tested because no account credentials were supplied.
+The application is a Tauri + React personal workspace with email outreach, provider-specific sending limits, and web research. SMTP delivery, desktop website fetching, and real provider connections require local user configuration.
 
 ## Implemented
 

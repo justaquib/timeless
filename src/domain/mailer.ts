@@ -1,6 +1,6 @@
 import { z } from "zod";
+import type { MailProviderFamily } from "./preferences";
 
-export type Section = "dashboard" | "compose" | "templates" | "audience" | "activity";
 export type Encryption = "starttls" | "ssl";
 export type GmailAccountType = "personal" | "workspace";
 export type DeliveryStatus = "queued" | "sending" | "sent" | "failed";
@@ -38,10 +38,11 @@ export interface PublicSmtpSettings {
   fromName: string;
   fromEmail: string;
   gmailAccountType: GmailAccountType;
+  providerFamily: MailProviderFamily;
 }
 
-export interface GmailSendQuota {
-  accountType: GmailAccountType;
+export interface MailSendQuota {
+  providerFamily: MailProviderFamily;
   recipientsLast24Hours: number;
   dailyLimit: number;
   remaining: number;
