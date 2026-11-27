@@ -16,8 +16,8 @@ The application is a Tauri + React personal workspace with email outreach, provi
 - Gmail quick setup for `smtp.gmail.com:587` with STARTTLS and App Password instructions.
 - Zoho Mail, Outlook.com, and Microsoft 365 SMTP quick presets.
 - Timeless startup splash with an original synthesized intro cue and optional Google sign-in.
-- Google desktop OAuth using PKCE and a loopback callback; Gmail refresh credentials are stored in the OS keychain.
-- SMTP credentials stored by Rust in the operating system credential store.
+- Google desktop OAuth using PKCE and a loopback callback; Gmail refresh credentials are stored in the bundled SQLite database.
+- SMTP credentials stored by Rust in the bundled SQLite database, encrypted at rest with AES-256-GCM.
 - SMTP connection test command and per-recipient send command.
 - Template attachments stored in the Tauri app data directory and included on each sequential send (maximum 10 files / 10 MB total per message).
 - Sequential send queue with confirmation, progress, failure status, and stop-after-current behavior.

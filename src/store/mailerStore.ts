@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import type { MailAttachment, MailTemplate, Recipient, SentMailRecord } from "../domain/mailer";
 
 interface MailerState {
@@ -22,11 +23,33 @@ const MAX_STORED_SENT_MAIL = 5_000;
 const PERSISTENCE_KEY = "timeless-mailer";
 const LEGACY_PERSISTENCE_KEY = "postbird-mailer";
 const storage = createJSONStorage(() => ({
-  getItem: (name: string) =>
-    localStorage.getItem(name)
-    ?? (name === PERSISTENCE_KEY ? localStorage.getItem(LEGACY_PERSISTENCE_KEY) : null),
-  setItem: (name: string, value: string) => localStorage.setItem(name, value),
-  removeItem: (name: string) => localStorage.removeItem(name),
+  getItem: async (name: string) => {
+    if (!isTauri()) {
+      return localStorage.getItem(name)
+        ?? (name === PERSISTENCE_KEY ? localStorage.getItem(LEGACY_PERSISTENCE_KEY) : null);
+    }
+    const legacy = localStorage.getItem(name)
+      ?? (name === PERSISTENCE_KEY ? localStorage.getItem(LEGACY_PERSISTENCE_KEY) : null);
+    const saved = await invoke<string | null>("load_workspace_state", { key: name, legacy });
+    if (saved && legacy) {
+      localStorage.removeItem(name);
+      if (name === PERSISTENCE_KEY) localStorage.removeItem(LEGACY_PERSISTENCE_KEY);
+    }
+    return saved;
+  },
+  setItem: (name: string, value: string) => {
+    if (isTauri()) {
+      void invoke("save_workspace_state", { key: name, value }).catch((error: unknown) => {
+        console.error(`Could not persist ${name} to the local database:`, error);
+      });
+      return;
+    }
+    localStorage.setItem(name, value);
+  },
+  removeItem: (name: string) => {
+    if (isTauri()) return;
+    localStorage.removeItem(name);
+  },
 }));
 
 const initialTemplates: MailTemplate[] = [

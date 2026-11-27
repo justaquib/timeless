@@ -133,7 +133,7 @@ export function SettingsModal({
         {!isTauri() && (
           <div className="mt-5 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800">
             <AlertCircle className="mt-0.5 shrink-0" size={17} />
-            <p>SMTP credentials are stored in the desktop system keychain. Open this screen in the Tauri app to connect an account.</p>
+            <p>SMTP credentials are stored in the desktop app's local database. Open this screen in the Tauri app to connect an account.</p>
           </div>
         )}
 
@@ -230,7 +230,7 @@ export function SettingsModal({
           </div>
           <p className="flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
             <ShieldCheck className="mt-0.5 shrink-0 text-emerald-600" size={16} />
-            Your password is stored in your operating system’s secure keychain, not in browser storage.
+            Your password is encrypted and stored in the desktop app's local database on this device, not in browser storage.
           </p>
           <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-between">
             <button

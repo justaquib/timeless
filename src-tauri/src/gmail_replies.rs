@@ -2,9 +2,10 @@ use std::collections::HashSet;
 
 use reqwest::blocking::Client;
 use serde::Deserialize;
+use tauri::AppHandle;
 
 use crate::gmail_auth::{oauth_client, refresh_access_token, response_json};
-use crate::sent_history::{SentMailRecord, merge_sent_mail};
+use crate::database::{SentMailRecord, merge_sent_records};
 
 const GMAIL_API: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 const MAX_TRACKED_SENT_MESSAGES: usize = 5_000;
@@ -43,13 +44,14 @@ struct GmailHeader {
 
 #[tauri::command]
 pub(crate) async fn get_gmail_reply_count(
+    app: AppHandle,
     client_id: String,
     client_secret: String,
     sent_message_ids: Vec<String>,
     day_start: u64,
 ) -> Result<usize, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        get_gmail_reply_count_sync(client_id, client_secret, sent_message_ids, day_start)
+        get_gmail_reply_count_sync(&app, client_id, client_secret, sent_message_ids, day_start)
     })
     .await
     .map_err(|error| format!("Gmail reply lookup task failed: {error}"))?
@@ -70,10 +72,11 @@ pub(crate) async fn recover_gmail_sent_mail(
         {
             return Err("Configure a valid Gmail sender address before recovery.".into());
         }
-        let access_token = refresh_access_token(&client_id, &client_secret)?;
+        let access_token = refresh_access_token(&app, &client_id, &client_secret)?;
         let records =
             find_timeless_sent_messages(&oauth_client()?, &access_token, from_email.trim())?;
-        let (_, added) = merge_sent_mail(&app, records)?;
+        let records = records.into_iter().map(SentMailRecord::into_value).collect::<Vec<_>>();
+        let (_, added) = merge_sent_records(&app, &records)?;
         Ok(added)
     })
     .await
@@ -81,6 +84,7 @@ pub(crate) async fn recover_gmail_sent_mail(
 }
 
 fn get_gmail_reply_count_sync(
+    app: &AppHandle,
     client_id: String,
     client_secret: String,
     sent_message_ids: Vec<String>,
@@ -102,7 +106,7 @@ fn get_gmail_reply_count_sync(
         return Ok(0);
     }
 
-    let access_token = refresh_access_token(&client_id, &client_secret)?;
+    let access_token = refresh_access_token(app, &client_id, &client_secret)?;
     count_today_replies(&oauth_client()?, &access_token, &tracked_ids, day_start)
 }
 

@@ -79,7 +79,7 @@ export function GmailLoginScreen({
           Continue without Gmail <ArrowRight size={15} />
         </button>
         <p className="mt-4 text-center text-[10px] leading-5 text-neutral-500">
-          Google’s refresh token stays in your system keychain.{" "}
+          Google’s refresh token is encrypted and stays in the app’s local database on this device.{" "}
           <a
             className="underline underline-offset-2 hover:text-neutral-300"
             href="https://myaccount.google.com/permissions"

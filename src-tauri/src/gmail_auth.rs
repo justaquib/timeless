@@ -5,15 +5,14 @@ use std::{
     time::{Duration, Instant},
 };
 
-use keyring::Entry;
 use reqwest::blocking::{Client, Response};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
+use crate::database::{delete_secret, read_secret, write_secret};
 use crate::gmail_auth_callback::parse_callback_request;
 
-const KEYRING_SERVICE: &str = "com.justaquib.timeless";
-const KEYRING_USER: &str = "gmail-oauth";
+const GMAIL_SECRET_NAME: &str = "gmail-oauth";
 const CALLBACK_EVENT: &str = "gmail-oauth-callback";
 const TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const PROFILE_URL: &str = "https://gmail.googleapis.com/gmail/v1/users/me/profile";
@@ -51,33 +50,19 @@ struct GmailProfile {
     email_address: String,
 }
 
-fn keyring_entry() -> Result<Entry, String> {
-    Entry::new(KEYRING_SERVICE, KEYRING_USER)
-        .map_err(|error| format!("Could not access the system credential store: {error}"))
+fn stored_credentials(app: &AppHandle) -> Result<Option<StoredGmailCredentials>, String> {
+    match read_secret(app, GMAIL_SECRET_NAME)? {
+        Some(serialized) => serde_json::from_str(&serialized)
+            .map(Some)
+            .map_err(|error| format!("Stored Gmail credentials are invalid: {error}")),
+        None => Ok(None),
+    }
 }
 
-fn stored_credentials() -> Result<Option<StoredGmailCredentials>, String> {
-    let entry = keyring_entry()?;
-    let serialized = match entry.get_password() {
-        Ok(serialized) => serialized,
-        Err(keyring::Error::NoEntry) => return Ok(None),
-        Err(error) => {
-            return Err(format!(
-                "Could not read Gmail credentials from the system credential store: {error}"
-            ));
-        }
-    };
-    serde_json::from_str(&serialized)
-        .map(Some)
-        .map_err(|error| format!("Stored Gmail credentials are invalid: {error}"))
-}
-
-fn save_credentials(credentials: &StoredGmailCredentials) -> Result<(), String> {
+fn save_credentials(app: &AppHandle, credentials: &StoredGmailCredentials) -> Result<(), String> {
     let serialized = serde_json::to_string(credentials)
         .map_err(|error| format!("Could not serialize Gmail credentials: {error}"))?;
-    keyring_entry()?
-        .set_password(&serialized)
-        .map_err(|error| format!("Could not save Gmail credentials securely: {error}"))
+    write_secret(app, GMAIL_SECRET_NAME, &serialized)
 }
 
 fn is_client_id_error(error: &str) -> bool {
@@ -167,8 +152,8 @@ fn fetch_profile(access_token: &str) -> Result<String, String> {
     Ok(profile.email_address)
 }
 
-pub(crate) fn refresh_access_token(client_id: &str, client_secret: &str) -> Result<String, String> {
-    let credentials = stored_credentials()?
+pub(crate) fn refresh_access_token(app: &AppHandle, client_id: &str, client_secret: &str) -> Result<String, String> {
+    let credentials = stored_credentials(app)?
         .ok_or_else(|| "Sign in with Gmail to enable reply tracking.".to_string())?;
     let mut form = vec![
         ("client_id", client_id),
@@ -185,7 +170,7 @@ pub(crate) fn refresh_access_token(client_id: &str, client_secret: &str) -> Resu
         .map_err(|error| format!("Could not refresh Gmail access: {error}"))?;
     let token: TokenResponse = response_json(response)?;
     if let Some(refresh_token) = token.refresh_token {
-        save_credentials(&StoredGmailCredentials {
+        save_credentials(app, &StoredGmailCredentials {
             email: credentials.email,
             refresh_token,
         })?;
@@ -194,8 +179,8 @@ pub(crate) fn refresh_access_token(client_id: &str, client_secret: &str) -> Resu
 }
 
 #[tauri::command]
-pub(crate) fn get_gmail_auth_account() -> Result<Option<GmailAuthAccount>, String> {
-    Ok(stored_credentials()?.map(|credentials| GmailAuthAccount {
+pub(crate) fn get_gmail_auth_account(app: AppHandle) -> Result<Option<GmailAuthAccount>, String> {
+    Ok(stored_credentials(&app)?.map(|credentials| GmailAuthAccount {
         email: credentials.email,
     }))
 }
@@ -288,6 +273,7 @@ fn respond_to_browser(stream: &mut TcpStream, success: bool) {
 
 #[tauri::command]
 pub(crate) async fn exchange_gmail_oauth_code(
+    app: AppHandle,
     client_id: String,
     client_secret: String,
     code: String,
@@ -295,13 +281,14 @@ pub(crate) async fn exchange_gmail_oauth_code(
     redirect_uri: String,
 ) -> Result<GmailAuthAccount, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        exchange_gmail_oauth_code_sync(client_id, client_secret, code, verifier, redirect_uri)
+        exchange_gmail_oauth_code_sync(&app, client_id, client_secret, code, verifier, redirect_uri)
     })
     .await
     .map_err(|error| format!("Gmail sign-in task failed: {error}"))?
 }
 
 fn exchange_gmail_oauth_code_sync(
+    app: &AppHandle,
     client_id: String,
     client_secret: String,
     code: String,
@@ -335,7 +322,7 @@ fn exchange_gmail_oauth_code_sync(
         .map_err(|error| format!("Could not exchange the Gmail authorization code: {error}"))?;
     let token: TokenResponse = response_json(response)?;
     let email = fetch_profile(&token.access_token)?;
-    let previous = stored_credentials()?;
+    let previous = stored_credentials(app)?;
     let refresh_token = match token.refresh_token {
         Some(refresh_token) => refresh_token,
         None => previous
@@ -346,7 +333,7 @@ fn exchange_gmail_oauth_code_sync(
                     .to_string()
             })?,
     };
-    save_credentials(&StoredGmailCredentials {
+    save_credentials(app, &StoredGmailCredentials {
         email: email.clone(),
         refresh_token,
     })?;
@@ -354,13 +341,8 @@ fn exchange_gmail_oauth_code_sync(
 }
 
 #[tauri::command]
-pub(crate) fn disconnect_gmail() -> Result<(), String> {
-    match keyring_entry()?.delete_credential() {
-        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
-        Err(error) => Err(format!(
-            "Could not remove Gmail credentials securely: {error}"
-        )),
-    }
+pub(crate) fn disconnect_gmail(app: AppHandle) -> Result<(), String> {
+    delete_secret(&app, GMAIL_SECRET_NAME)
 }
 
 #[cfg(test)]

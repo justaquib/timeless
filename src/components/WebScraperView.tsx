@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { CalendarDays, Clock3, ExternalLink, Globe2, MessageCircle, Search, Send } from "lucide-react";
-import type { ScrapeSearchResults, ScrapeTimeframe, ScrapedPage } from "../domain/webScraper";
+import type { SavedScrapeSearch, ScrapeSearchResults, ScrapeTimeframe, ScrapedPage } from "../domain/webScraper";
 
 const timeframeOptions: { value: ScrapeTimeframe; label: string }[] = [
   { value: "24h", label: "Past 24 hours" },
@@ -30,6 +30,10 @@ export function WebScraperView({
   onSearch,
   onOpenPage,
   onShare,
+  onSaveResults,
+  onLoadSavedSearch,
+  onDeleteSavedSearch,
+  savedSearches,
 }: {
   website: string;
   keyword: string;
@@ -46,6 +50,10 @@ export function WebScraperView({
   onSearch: () => void;
   onOpenPage: (url: string) => void;
   onShare: (page: ScrapedPage, platform: "whatsapp" | "telegram") => void;
+  onSaveResults: () => void;
+  onLoadSavedSearch: (search: SavedScrapeSearch) => void;
+  onDeleteSavedSearch: (id: string) => void;
+  savedSearches: SavedScrapeSearch[];
 }) {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -138,6 +146,23 @@ export function WebScraperView({
         {error && <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700" role="alert">{error}</p>}
       </section>
 
+      {savedSearches.length > 0 && (
+        <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+          <h2 className="text-sm font-semibold text-slate-900">Saved searches</h2>
+          <div className="mt-3 divide-y divide-slate-100">
+            {savedSearches.map((search) => (
+              <div className="flex items-center gap-3 py-2.5" key={search.id}>
+                <button className="min-w-0 flex-1 text-left" onClick={() => onLoadSavedSearch(search)} type="button">
+                  <span className="block truncate text-xs font-semibold text-slate-800">{search.keyword} · {search.website}</span>
+                  <span className="text-[11px] text-slate-500">{search.results.pages.length} matches · {formatPublishedAt(search.savedAt)}</span>
+                </button>
+                <button className="text-xs font-medium text-rose-600 hover:text-rose-700" onClick={() => onDeleteSavedSearch(search.id)} type="button">Delete</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {loading && (
         <div aria-live="polite" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
           Scanning page {progress} of up to 20. This may take a little while.
@@ -150,9 +175,10 @@ export function WebScraperView({
             <h2 className="text-sm font-semibold text-slate-900">
               {results.pages.length} matching page{results.pages.length === 1 ? "" : "s"}
             </h2>
-            <p className="mt-1 text-xs text-slate-500">
-              Scanned {results.scannedCount} page{results.scannedCount === 1 ? "" : "s"} · sorted by published date
-            </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Scanned {results.scannedCount} page{results.scannedCount === 1 ? "" : "s"} · sorted by published date
+              </p>
+              <button className="mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-700" onClick={onSaveResults} type="button">Save these results</button>
             {results.failedCount > 0 && (
               <p className="mt-2 text-xs text-amber-700" role="status">
                 {results.failedCount} linked page{results.failedCount === 1 ? "" : "s"} could not be scanned. First error: {results.firstFailure}

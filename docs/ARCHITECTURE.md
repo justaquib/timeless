@@ -21,7 +21,9 @@ src/
   config.ts                  Google Desktop OAuth client configuration
   main.tsx                   React Query and toast providers
 src-tauri/
-  src/lib.rs                 SMTP commands and keychain integration
+  src/lib.rs                 SMTP commands and local credential storage
+  src/crypto.rs              Local AES-256-GCM encryption for stored secrets
+  src/database.rs            Bundled SQLite schema, commands, and legacy-data migration
   src/gmail.rs               Gmail account safety ceilings
   src/mail_limits.rs         Provider-family rolling-window limits and ledger
   src/gmail_auth.rs          Loopback OAuth, token refresh, and secure storage
@@ -48,23 +50,24 @@ Name and colocate a feature's container and view so their boundary is easy to fi
 1. `main.tsx` creates the React root, TanStack Query client, and toast container.
 2. The app shows a 5.5-second Timeless splash, then offers Google sign-in with an option to continue without Gmail. Sign-in uses the system browser, a loopback callback, and PKCE.
 3. `App.tsx` composes the active workspace section and owns temporary navigation/draft state; new feature containers own their feature-specific data coordination.
-4. Templates, contacts, sent receipts, appearance, splash music, and per-provider recipient limits persist locally through Zustand. SMTP secrets and the Gmail refresh token are never persisted by the frontend.
+4. Templates, contacts, sent receipts, appearance, splash music, and per-provider recipient limits persist locally through Zustand. In the Tauri runtime the Zustand persistence adapter reads and writes through SQLite commands instead of webview storage; browser preview still uses localStorage. SMTP secrets and the Gmail refresh token are never persisted by the frontend.
 5. `useSmtpSettings` reads the public SMTP account fields through the Tauri command boundary.
-6. Saving and testing SMTP settings call Rust commands. Rust stores SMTP credentials and the Gmail refresh token in the OS credential store.
+6. Saving and testing SMTP settings call Rust commands. Rust stores SMTP credentials and the Gmail refresh token in the bundled SQLite database under the app data directory.
 7. Template attachment bytes are stored in the Tauri app data directory; only their names, MIME types, sizes, and generated IDs are kept with the local template metadata.
 8. `useSendQueue` sends at most 100 messages serially, with a three-second delay between attempts. Each message contains one primary recipient plus any configured Cc/Bcc recipients and the template's attachments; successful receipts include a Message-ID used for history and reply matching.
 9. Rust reserves each To/Cc/Bcc delivery in a per-provider-account rolling 24-hour ledger before SMTP delivery and enforces the configured family limit. Gmail is additionally capped at 400 recipients for personal Gmail or 1,600 for Workspace and paced at least three seconds apart. The compose view shows remaining slots and the next expiry. Failed attempts remain counted to avoid accidental duplicates.
 10. Rust builds a plain-text MIME message with the selected attachments and delivers it over the configured SMTP connection.
-11. Successful receipts are stored in an atomic JSON history file under the Tauri app data directory. Existing webview history is merged into this file on app startup.
+11. Successful receipts are stored in a bundled SQLite database under the Tauri app data directory. Existing webview history and the legacy JSON history file are merged into this database on first load.
 12. When signed into Gmail, the dashboard uses Gmail API read-only metadata calls to count today's inbox replies whose `In-Reply-To` or `References` headers match Timeless Message-IDs. The Sent view can optionally scan Gmail's Sent metadata for the last 30 days and import only messages with Timeless-generated Message-IDs. Message bodies are not requested or stored.
-13. The Web scraper container fetches up to 20 same-origin HTML pages through a bounded Tauri command, extracts matching page text and published-date metadata, and opens individual links or share dialogs. No website content is persisted.
+13. The Web scraper container fetches up to 20 same-origin HTML pages through a bounded Tauri command, extracts matching page text and published-date metadata, and opens individual links or share dialogs. Searches can be saved to and reloaded from the SQLite database; raw page HTML is not persisted.
+14. The Tasks container stores task title, notes, completion state, and timestamps in the SQLite database.
 
 ## Trust boundaries
 
 - Browser preview cannot save credentials or send mail; those commands require the Tauri runtime.
 - Website scraping is available only in the Tauri runtime. Requests are restricted to public IP addresses, same-origin redirects, HTML responses, and 2 MB per page; the frontend crawls at most 20 same-origin pages and does not execute fetched scripts.
-- The SMTP password is only present in the settings form and Tauri IPC call while being saved/tested. Rust stores it using the OS keychain.
-- Google OAuth uses a public Desktop client and PKCE; an optional client secret is bundled with the desktop app when configured and cannot be kept confidential. The refresh token is stored in the OS keychain. The Gmail API scope is read-only; reply tracking and optional sent-history recovery request message metadata only.
+- The SMTP password is only present in the settings form and Tauri IPC call while being saved/tested. Rust encrypts it with AES-256-GCM before storing it in the bundled SQLite database; the data key is a random file (`secret.key`, owner-only permissions) in the app data directory. This protects the database contents at rest but is not a substitute for full-disk encryption.
+- Google OAuth uses a public Desktop client and PKCE; an optional client secret is bundled with the desktop app when configured and cannot be kept confidential. The refresh token is encrypted with the same local AES-256-GCM scheme before storage. The Gmail API scope is read-only; reply tracking and optional sent-history recovery request message metadata only.
 - Attachment files are stored locally under the app data directory, not in browser localStorage. Each message is limited to 10 files and 10 MB total.
 - Do not log, return, or persist the SMTP password in frontend storage.
 - Every send is user-confirmed. Failures are recorded per recipient, and stopping takes effect after the active send completes.
@@ -73,4 +76,4 @@ Name and colocate a feature's container and view so their boundary is easy to fi
 
 ## Current persistence boundaries
 
-Templates, contacts, preferences, and up to 5,000 successful sent receipts persist in local webview storage, with sent receipts also stored in the Tauri app data directory. Attachment file bytes and the provider-family send ledger also persist in the Tauri app data directory. Delivery failures remain session-only. HTML email and automatic retries are not implemented.
+Templates, contacts, preferences, tasks, saved scrape searches, and up to 5,000 successful sent receipts persist in a bundled SQLite database (`timeless.sqlite3`) under the Tauri app data directory; browser preview falls back to webview storage. SMTP credentials and the Gmail refresh token are encrypted with AES-256-GCM using a local key file (`secret.key`) before being stored in that database. Attachment file bytes and the provider-family send ledger also persist in the Tauri app data directory. Existing webview storage and the legacy JSON sent-mail history are imported into SQLite on first load. Delivery failures remain session-only. HTML email and automatic retries are not implemented.

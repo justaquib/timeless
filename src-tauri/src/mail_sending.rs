@@ -47,7 +47,7 @@ pub(super) fn send_email(
     if attachments.len() > MAX_ATTACHMENTS {
         return Err("A message cannot include more than 10 attachments.".into());
     }
-    let settings = stored_settings()?;
+    let settings = stored_settings(&app)?;
     let transport = build_transport(&settings)?;
     let history_from_email = settings.from_email.clone();
     let history_recipient_email = to_email.clone();
@@ -130,18 +130,14 @@ pub(super) fn send_email(
             super::mail_limits::provider_label(super::mail_limits::provider_family(&settings))
         )
     })?;
-    let history_save_error = super::sent_history::record_sent_mail(
-        &app,
-        super::sent_history::SentMailRecord {
-            message_id: message_id.clone(),
-            from_email: history_from_email,
-            recipient_email: history_recipient_email,
-            recipient_name: history_recipient_name,
-            subject: history_subject,
-            sent_at: sent_at.saturating_mul(1_000),
-        },
-    )
-    .err();
+    let history_save_error = crate::database::merge_sent_records(&app, &[serde_json::json!({
+        "messageId": message_id,
+        "fromEmail": history_from_email,
+        "recipientEmail": history_recipient_email,
+        "recipientName": history_recipient_name,
+        "subject": history_subject,
+        "sentAt": sent_at.saturating_mul(1_000),
+    })]).err();
     Ok(MailSendReceipt {
         message_id,
         sent_at,

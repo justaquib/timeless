@@ -2,7 +2,7 @@
 
 Timeless is a personal desktop workspace for reusable email templates, contact management, secure SMTP sending, and focused web research. Email sequences support up to 100 contacts, with optional CC/BCC copies; templates can include up to 10 attachments with a combined size of 10 MB.
 
-SMTP delivery, secure credential storage, and Google sign-in require the Tauri desktop runtime. Credentials are stored in the operating system keychain; browser preview does not send mail.
+SMTP delivery, secure credential storage, and Google sign-in require the Tauri desktop runtime. Credentials are encrypted with AES-256-GCM and stored in a bundled SQLite database under the app data directory; browser preview does not send mail.
 
 Quick SMTP setup is available for Gmail, Zoho Mail, Outlook.com, and Microsoft 365. Gmail sending uses a Google App Password and keeps a conservative local cap of 400 recipients per rolling 24 hours for personal Gmail or 1,600 for Workspace, with at least three seconds between messages. To, Cc, and Bcc recipients all count toward this local cap. Google limits vary and include recipients sent outside Timeless; the app cannot guarantee inbox placement or prevent provider restrictions.
 
@@ -12,9 +12,9 @@ Quick SMTP setup is available for Gmail, Zoho Mail, Outlook.com, and Microsoft 3
 2. Copy `.env.example` to `.env.local` and set `VITE_GOOGLE_CLIENT_ID` to that client ID. Google documents the Desktop app client secret as optional, but if the token endpoint reports it missing, set `VITE_GOOGLE_CLIENT_SECRET` to the secret for that same Desktop app client.
 3. Restart the dev server or rebuild the app.
 
-Google sign-in is optional. Timeless uses a PKCE authorization flow in the system browser and requests Gmail read-only access. Desktop OAuth clients are public clients; any client secret configured in `.env.local` is bundled with the app and cannot be kept confidential. Use only a Desktop app client, never a confidential Web app client secret. The dashboard counts today's inbox replies whose `In-Reply-To` or `References` headers match sent Message-IDs from the connected Gmail address; it requests headers only, not message bodies. The Google refresh token is stored in the OS keychain. Gmail OAuth must be configured and tested in your own Google Cloud project.
+Google sign-in is optional. Timeless uses a PKCE authorization flow in the system browser and requests Gmail read-only access. Desktop OAuth clients are public clients; any client secret configured in `.env.local` is bundled with the app and cannot be kept confidential. Use only a Desktop app client, never a confidential Web app client secret. The dashboard counts today's inbox replies whose `In-Reply-To` or `References` headers match sent Message-IDs from the connected Gmail address; it requests headers only, not message bodies. The Google refresh token is stored in the bundled SQLite database. Gmail OAuth must be configured and tested in your own Google Cloud project.
 
-Successful sent receipts (up to 5,000) are stored locally in the app's webview storage. The dashboard sent count can be filtered by today, this week (Monday-start), this month, or this year using the computer's local calendar.
+Successful sent receipts (up to 5,000) are stored locally in a bundled SQLite database under the app data directory. Templates, contacts, preferences, tasks, and saved website searches are stored there too; existing webview storage and the previous JSON sent-mail history are imported on first load. The dashboard sent count can be filtered by today, this week (Monday-start), this month, or this year using the computer's local calendar.
 
 ## Preferences
 

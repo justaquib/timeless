@@ -249,7 +249,7 @@ pub(crate) fn send_quota(
     app: &AppHandle,
     configured_limit: usize,
 ) -> Result<Option<MailSendQuota>, String> {
-    let settings = match stored_settings() {
+    let settings = match stored_settings(app) {
         Ok(settings) => settings,
         Err(error) if error == "SMTP is not configured yet." => return Ok(None),
         Err(error) => return Err(error),

@@ -1,10 +1,34 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createJSONStorage } from "zustand/middleware";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import {
   defaultDailyLimits,
   normalizeDailyRecipientLimit,
 } from "../domain/preferences";
 import type { Appearance, DailyLimits, MailProviderFamily } from "../domain/preferences";
+
+const storage = createJSONStorage(() => ({
+  getItem: async (name: string) => {
+    if (!isTauri()) return localStorage.getItem(name);
+    const legacy = localStorage.getItem(name);
+    const saved = await invoke<string | null>("load_workspace_state", { key: name, legacy });
+    if (saved && legacy) localStorage.removeItem(name);
+    return saved;
+  },
+  setItem: (name: string, value: string) => {
+    if (isTauri()) {
+      void invoke("save_workspace_state", { key: name, value }).catch((error: unknown) => {
+        console.error("Could not persist preferences to the local database:", error);
+      });
+      return;
+    }
+    localStorage.setItem(name, value);
+  },
+  removeItem: (name: string) => {
+    if (!isTauri()) localStorage.removeItem(name);
+  },
+}));
 
 interface PreferencesState {
   appearance: Appearance;
@@ -33,6 +57,7 @@ export const usePreferencesStore = create<PreferencesState>()(
     }),
     {
       name: "timeless-preferences",
+      storage,
       partialize: ({ appearance, dailyLimits, splashMusicEnabled }) => ({
         appearance,
         dailyLimits,

@@ -23,6 +23,7 @@ import { TemplatesView } from "./components/TemplatesView";
 import { RecipientPickerModal } from "./components/RecipientPickerModal";
 import { PreferencesContainer } from "./components/PreferencesContainer";
 import { WebScraperContainer } from "./components/WebScraperContainer";
+import { TasksContainer } from "./components/TasksContainer";
 import { useGmailAuth } from "./hooks/useGmailAuth";
 import { useGmailReplyCount } from "./hooks/useGmailReplyCount";
 import { sentMailHistoryQueryKey, useSentMailHistory } from "./hooks/useSentMailHistory";
@@ -323,11 +324,12 @@ function WorkspaceApp({
             />
           )}
           {activeSection === "scraper" && <WebScraperContainer />}
+          {activeSection === "tasks" && <TasksContainer />}
           {activeSection === "preferences" && <PreferencesContainer />}
 
           <footer className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/80 pt-4 text-[11px] text-slate-400">
             <span>Timeless · Your workspace, your pace</span>
-            <span className="inline-flex items-center gap-1.5"><ShieldCheck size={13} /> Credentials kept in your system keychain</span>
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck size={13} /> Credentials stored locally on this device</span>
           </footer>
         </main>
       </div>

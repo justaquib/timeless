@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Clock3, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 
 type SoundState = "playing" | "ready" | "blocked" | "unavailable";
 
@@ -113,8 +113,6 @@ export function SplashScreen({
               <text lengthAdjust="spacingAndGlyphs" textLength="140" x="8" y="94">Tim</text>
               <text lengthAdjust="spacingAndGlyphs" textLength="140" x="278" y="94">less</text>
             </g>
-
-            {/* Tapered Crescent Circle & Animated Dial centered at (210, 75) */}
             <g fill="white">
               <path d="M 271 75 A 61 61 0 1 0 260 110 A 58 58 0 1 1 271 75 Z" />
 

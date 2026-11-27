@@ -1,4 +1,4 @@
-import { Activity, ChevronDown, FileText, Gauge, Inbox, MoreHorizontal, Search, Send, Settings, SlidersHorizontal, Sparkles, Users } from "lucide-react";
+import { Activity, ChevronDown, FileText, Gauge, Inbox, ListTodo, MoreHorizontal, Search, Send, Settings, SlidersHorizontal, Users } from "lucide-react";
 import type { Section } from "../domain/workspace";
 import { useMailerStore } from "../store/mailerStore";
 
@@ -8,6 +8,7 @@ const navItems: { id: Section; label: string; icon: typeof Send }[] = [
   { id: "templates", label: "Templates", icon: FileText },
   { id: "audience", label: "Audience", icon: Users },
   { id: "activity", label: "Sent", icon: Activity },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
   { id: "scraper", label: "Web scraper", icon: Search },
   { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
 ];
@@ -83,29 +84,28 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="mt-6 border-t border-slate-100 pt-4">
-        <div className="mb-3 flex items-center justify-between px-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Mail account</p>
-          <span className={`size-2 rounded-full ${connected ? "bg-emerald-500" : "bg-slate-300"}`} />
-        </div>
-        <button
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50"
-          onClick={onOpenSettings}
-          type="button"
-        >
-          <Settings size={17} />
-          <span className="flex-1">Mail settings</span>
-          <span className="text-[10px] text-slate-400">{connected ? "Ready" : "Setup"}</span>
-        </button>
-      </div>
-
       <div className="mt-auto">
-        <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
+        {/* <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
           <div className="flex items-center gap-2 text-indigo-700">
             <Sparkles size={15} />
             <span className="text-xs font-semibold">Make room for what matters</span>
           </div>
           <p className="mt-1.5 text-[11px] leading-5 text-slate-500">Messages, contacts, and research in one calm workspace.</p>
+        </div> */} 
+        <div className="mt-6 border-t border-slate-100 pt-4">
+          <div className="mb-3 flex items-center justify-between px-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Mail account</p>
+            <span className={`size-2 rounded-full ${connected ? "bg-emerald-500" : "bg-slate-300"}`} />
+          </div>
+          <button
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50"
+            onClick={onOpenSettings}
+            type="button"
+          >
+            <Settings size={17} />
+            <span className="flex-1">Mail settings</span>
+            <span className="text-[10px] text-slate-400">{connected ? "Ready" : "Setup"}</span>
+          </button>
         </div>
         <div className="flex items-center gap-3 border-t border-slate-100 px-2 pt-3">
           <div className="flex size-9 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">JD</div>

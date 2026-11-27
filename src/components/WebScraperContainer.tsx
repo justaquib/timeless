@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { toast } from "react-toastify";
@@ -9,8 +9,8 @@ import {
   pageLinks,
   timeframeStart,
 } from "../domain/webScraper";
-import type { ScrapeSearchResults, ScrapeTimeframe, ScrapedPage } from "../domain/webScraper";
-import { fetchScrapePage } from "../services/webScraperApi";
+import type { SavedScrapeSearch, ScrapeSearchResults, ScrapeTimeframe, ScrapedPage } from "../domain/webScraper";
+import { deleteScrapeSearch, fetchScrapePage, getSavedScrapeSearches, saveScrapeSearch } from "../services/webScraperApi";
 import { WebScraperView } from "./WebScraperView";
 
 const MAX_CONCURRENT_REQUESTS = 4;
@@ -24,6 +24,57 @@ export function WebScraperContainer() {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ScrapeSearchResults | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savedSearches, setSavedSearches] = useState<SavedScrapeSearch[]>([]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    void getSavedScrapeSearches()
+      .then(setSavedSearches)
+      .catch((caught: unknown) => toast.error(`Could not load saved searches: ${String(caught)}`));
+  }, []);
+
+  const persistSearch = async (search: SavedScrapeSearch) => {
+    if (!isTauri()) {
+      toast.info("Saved searches require the Timeless desktop app.");
+      return;
+    }
+    try {
+      await saveScrapeSearch(search);
+      setSavedSearches((current) => [search, ...current.filter((item) => item.id !== search.id)]);
+      toast.success("Search saved.");
+    } catch (caught) {
+      toast.error(`Could not save search: ${String(caught)}`);
+    }
+  };
+
+  const saveCurrentResults = () => {
+    if (!results) return;
+    void persistSearch({
+      id: crypto.randomUUID(),
+      website,
+      keyword,
+      timeframe,
+      sinceDate,
+      savedAt: Date.now(),
+      results,
+    });
+  };
+
+  const loadSavedSearch = (search: SavedScrapeSearch) => {
+    setWebsite(search.website);
+    setKeyword(search.keyword);
+    setTimeframe(search.timeframe);
+    setSinceDate(search.sinceDate);
+    setResults(search.results);
+    setError(null);
+  };
+
+  const removeSavedSearch = (id: string) => {
+    if (!isTauri()) return;
+    void deleteScrapeSearch(id)
+      .then(() => setSavedSearches((current) => current.filter((item) => item.id !== id)))
+      .catch((caught: unknown) => toast.error(`Could not delete saved search: ${String(caught)}`));
+  };
 
   const searchWebsite = async () => {
     setError(null);
@@ -152,9 +203,13 @@ export function WebScraperContainer() {
       onWebsiteChange={setWebsite}
       progress={progress}
       results={results}
+      savedSearches={savedSearches}
       sinceDate={sinceDate}
       timeframe={timeframe}
       website={website}
+      onDeleteSavedSearch={removeSavedSearch}
+      onLoadSavedSearch={loadSavedSearch}
+      onSaveResults={saveCurrentResults}
     />
   );
 }

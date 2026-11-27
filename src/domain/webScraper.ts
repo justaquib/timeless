@@ -14,6 +14,16 @@ export interface ScrapeSearchResults {
   firstFailure: string | null;
 }
 
+export interface SavedScrapeSearch {
+  id: string;
+  website: string;
+  keyword: string;
+  timeframe: ScrapeTimeframe;
+  sinceDate: string;
+  savedAt: number;
+  results: ScrapeSearchResults;
+}
+
 export const MAX_CRAWL_PAGES = 20;
 
 export function normalizeWebsiteUrl(value: string) {

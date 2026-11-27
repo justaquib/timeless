@@ -5,7 +5,6 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use keyring::Entry;
 use lettre::{
     SmtpTransport,
     message::{Mailbox, header::ContentType},
@@ -18,13 +17,13 @@ mod gmail;
 mod gmail_auth;
 mod gmail_auth_callback;
 mod gmail_replies;
+mod crypto;
+mod database;
 mod mail_limits;
 mod mail_sending;
-mod sent_history;
 mod web_scraping;
 
-const KEYRING_SERVICE: &str = "com.justaquib.timeless";
-const KEYRING_USER: &str = "smtp-settings";
+const SMTP_SECRET_NAME: &str = "smtp-settings";
 const MAX_ATTACHMENT_BYTES: usize = 10 * 1024 * 1024;
 const MAX_ATTACHMENTS: usize = 10;
 
@@ -113,15 +112,12 @@ fn validate_settings(settings: &SmtpSettings) -> Result<(), String> {
     Ok(())
 }
 
-fn stored_settings() -> Result<SmtpSettings, String> {
-    let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER)
-        .map_err(|error| format!("Could not access the system credential store: {error}"))?;
-    let serialized = entry.get_password().map_err(|error| match error {
-        keyring::Error::NoEntry => "SMTP is not configured yet.".to_string(),
-        other => format!("Could not read SMTP settings from the system credential store: {other}"),
-    })?;
-    serde_json::from_str(&serialized)
-        .map_err(|error| format!("Stored SMTP settings are invalid: {error}"))
+fn stored_settings(app: &AppHandle) -> Result<SmtpSettings, String> {
+    match database::read_secret(app, SMTP_SECRET_NAME)? {
+        Some(serialized) => serde_json::from_str(&serialized)
+            .map_err(|error| format!("Stored SMTP settings are invalid: {error}")),
+        None => Err("SMTP is not configured yet.".to_string()),
+    }
 }
 
 fn build_transport(settings: &SmtpSettings) -> Result<SmtpTransport, String> {
@@ -218,8 +214,8 @@ fn delete_template_attachment(app: AppHandle, id: String) -> Result<(), String> 
 }
 
 #[tauri::command]
-fn get_smtp_settings() -> Result<Option<PublicSmtpSettings>, String> {
-    match stored_settings() {
+fn get_smtp_settings(app: AppHandle) -> Result<Option<PublicSmtpSettings>, String> {
+    match stored_settings(&app) {
         Ok(settings) => Ok(Some(PublicSmtpSettings::from(&settings))),
         Err(error) if error == "SMTP is not configured yet." => Ok(None),
         Err(error) => Err(error),
@@ -235,15 +231,11 @@ fn get_mail_send_quota(
 }
 
 #[tauri::command]
-fn save_smtp_settings(settings: SmtpSettings) -> Result<PublicSmtpSettings, String> {
+fn save_smtp_settings(app: AppHandle, settings: SmtpSettings) -> Result<PublicSmtpSettings, String> {
     validate_settings(&settings)?;
-    let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER)
-        .map_err(|error| format!("Could not access the system credential store: {error}"))?;
     let serialized = serde_json::to_string(&settings)
         .map_err(|error| format!("Could not serialize SMTP settings: {error}"))?;
-    entry.set_password(&serialized).map_err(|error| {
-        format!("Could not save SMTP settings to the system credential store: {error}")
-    })?;
+    database::write_secret(&app, SMTP_SECRET_NAME, &serialized)?;
     Ok(PublicSmtpSettings::from(&settings))
 }
 
@@ -265,6 +257,15 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            database::load_workspace_state,
+            database::save_workspace_state,
+            database::get_sent_mail_history,
+            database::save_scrape_search,
+            database::get_scrape_searches,
+            database::delete_scrape_search,
+            database::get_tasks,
+            database::save_task,
+            database::delete_task,
             get_smtp_settings,
             get_mail_send_quota,
             gmail_auth::get_gmail_auth_account,
@@ -273,7 +274,6 @@ pub fn run() {
             gmail_auth::disconnect_gmail,
             gmail_replies::get_gmail_reply_count,
             gmail_replies::recover_gmail_sent_mail,
-            sent_history::get_sent_mail_history,
             web_scraping::fetch_scrape_page,
             save_smtp_settings,
             test_smtp_connection,
